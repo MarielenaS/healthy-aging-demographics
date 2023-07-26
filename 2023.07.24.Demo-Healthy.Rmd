@@ -1,0 +1,302 @@
+---
+title: "Descriptive Statistics of Demographic Information  \nfor Healthy Participants"
+author: "Marielena"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  rmarkdown::pdf_document:  
+    fig_caption: yes        
+---
+
+```{r setup, include = FALSE}
+## R-setup
+
+library(tidyverse)
+library(readxl)
+library(ggpubr)
+
+## import data
+getwd() 
+setwd("../Demo") ## set folder 'Demo' as the working directory
+healthy_all <- readxl::read_xlsx("2023.07.24.Demo-Healthy.xlsx")
+
+## remove participants with MoCA score <25
+
+healthy <- healthy_all[which(healthy_all$moca> 25), ] ## should remove 19 participants 
+```
+
+## Number of Participants
+
+```{r number of p}
+nrow(healthy)#number of participants
+```
+
+```{r number of f}
+nrow(healthy[healthy$sex == "f",]) #number of women
+```
+
+```{r number of m}
+sum(with(healthy,sex == "m")) #number of men
+```
+
+## Descriptive Statistics (Age)
+
+```{r descriptive age}
+mean(healthy$age) #mean
+```
+
+```{r range}
+range(healthy$age) #min & max
+```
+
+```{r sd}
+sd(healthy$age) #standard-deviation
+```
+
+```{r var}
+var(healthy$age) #variance
+```
+
+ 
+
+ 
+
+ 
+
+## Descriptive Statistics (Education)
+
+```{r descriptive edu mean}
+mean(healthy$eduyears)#mean
+```
+
+```{r descriptive edu range}
+range(healthy$eduyears) #min & max
+```
+
+```{r descriptive edu sd}
+sd(healthy$eduyears) #standard-deviation 
+```
+
+```{r descriptive edu var}
+var(healthy$eduyears) #variance
+```
+
+## I. Age Histograms
+
+```{r hist, echo=FALSE}
+
+breakshist1=seq(18,85,by=1)
+#length(breakshist1)
+
+agehist_1 <- hist(healthy$age, 
+     main="Histogram of healhty participants' age",
+     sub="per year",
+     xlab="age",
+     xaxt="n",
+     ylab="number of participants",
+     ylim=c(0,25),
+     border="blue", 
+     col="green",
+     las=1, 
+     breaks=breakshist1,
+     xaxp=c(18,85, 1))
+
+#print(agehist_1)
+axis(side=1, at=seq(18,85, by=1), labels=seq(18,85, 1), cex.axis=0.50)
+
+```
+
+### Number of participants per age
+
+```{r, echo=FALSE}
+agg_tbl1 <- healthy %>% group_by(age) %>% 
+  summarise(total_count=n(),
+            .groups = 'drop')
+df1 <- agg_tbl1 %>% as.data.frame()
+df1
+
+```
+
+### a. 10-year age cohorts
+
+```{r hist10, echo=FALSE}
+
+agehist_10 <- hist(healthy$age, 
+     main="Histogram of healhty participants' age", 
+     sub="per decade",
+     xlab="age", 
+     ylab="number of participants",
+     border="blue", 
+     col="green",
+     xlim=c(0,100),
+     labels = NULL,
+     ylim=c(0,60),
+     las=1, 
+     breaks=seq(10,90, 10))
+
+#print(agehist_10)
+axis(side=1,at=seq(10,100,10),labels=seq(10,100,10))
+
+```
+
+```{r hist10 paper, echo=FALSE}
+
+agehist_10b <- hist(healthy$age,
+     main=NULL,
+     xlab="age", 
+     ylab="frequency",
+     border="black", 
+     col="gray",
+     xlim=c(10,90),
+     labels = NULL,
+     ylim=c(0,60),
+     las=1, 
+     breaks=seq(10,90, 10))
+
+#print(agehist_10)
+axis(side=1,at=seq(10,100,10),labels=seq(10,100,10))
+
+```
+
+### Number of Participants per life decade
+
+```{r group participant per decade, echo=FALSE}
+## Group by count using dplyr
+agg_tbl <- healthy %>% group_by(age = age - age %% 10) %>% 
+  summarise(total_count=n(),
+            .groups = 'drop')
+#agg_tbl
+
+## Convert tibble to df
+df10 <- agg_tbl %>% as.data.frame()
+df10
+```
+
+### b. 5-year age cohorts
+
+```{r hist5, echo=FALSE}
+g = healthy$age
+m<-mean(g)
+std<-sd(g)
+
+myhist <- hist(g,
+     main="Histogram of healhty participants' age", 
+     sub="per five-year intervals",
+     xlab="age", 
+     ylab="number of participants",
+     border="darkgray", 
+     col="darkmagenta",
+     xaxt='n',
+     ylim=c(0,40),
+     las=1, 
+     breaks=14)
+
+multiplier <- myhist$counts / myhist$density
+mydensity <- density(g)
+mydensity$y <- mydensity$y * multiplier[1]
+
+myhist <- hist(g,
+     main="Histogram of healhty participants' age", 
+     sub="per five-year intervals",
+     xlab="age", 
+     ylab="number of participants",
+     border="darkgray", 
+     col="darkmagenta",
+     xaxt='n',
+     ylim=c(0,40),
+     las=1, 
+     breaks=14)
+  lines(mydensity)
+     myx <- seq(min(g), max(g), length.out= 100)
+     mymean <- mean(g)
+     mysd <- sd(g)
+normal <- dnorm(x = myx, mean = mymean, sd = mysd)
+     lines(myx, normal * multiplier[1], col = "blue", lwd = 2)
+sd_x <- seq(mymean - 3 * mysd, mymean + 3 * mysd, by = mysd)
+sd_y <- dnorm(x = sd_x, mean = mymean, sd = mysd) * multiplier[1]
+segments(x0 = sd_x, y0= 0, x1 = sd_x, y1 = sd_y, col = "firebrick4", lwd = 2)
+axis(side=1, at=seq(10,85, 5), labels=seq(10,85, 5))
+plot=TRUE
+
+```
+
+### Number of Participants per five-year age groups
+
+```{r group participant per five-year intervals, echo=FALSE}
+## Group by count using dplyr
+agg_tbl2 <- healthy %>% group_by(age = age - age %% 5) %>% 
+  summarise(total_count=n(),
+            .groups = 'drop')
+#agg_tbl
+
+## Convert tibble to df
+df5 <- agg_tbl2 %>% as.data.frame()
+df5
+```
+
+---
+
+## II. Education histogram
+
+```{r hist-edu, echo=FALSE}
+
+eduhist <- hist(healthy$eduyears, 
+     main="Histogram for healhty participants' education", 
+     xlab="years of official education", 
+     ylab="participants",
+     border="red", 
+     col="blue",
+     xaxt='n',
+     xlim=c(5,28),
+     ylim=c(0,85),
+     las=1, 
+     breaks="FD")
+axis(side=1, at=seq(6,26, 2), labels=seq(6,26, 2))
+
+print(eduhist)
+```
+
+# Age - Edu Scatter plot
+
+```{r scatterplot age$edu, echo = FALSE}
+x <- healthy$age
+y <- healthy$eduyears
+## Plot with main and axis titles
+## Change point shape (pch = 19) and remove frame.
+plot(x, y, main = "Participants' Age - Years of education",
+     xlab = "age", ylab = "years of education",
+     pch = 19, frame = FALSE)
+
+## Add regression line
+plot(x, y, main = "Participants' Age - Years of education",
+     xlab = "age", ylab = "years of education",
+     pch = 19, frame = FALSE)
+abline(lm(y ~ x, data = mtcars), col = "blue")
+```
+
+## Correlations
+
+### a. Spearman Correlation
+
+```{r spearman corr age-edu, echo=FALSE}
+cor(healthy$eduyears, healthy$age, method = c ("spearman"))
+
+
+ggscatter(healthy, x = "eduyears", y = "age", 
+          add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "spearman",
+          xlab = "years of official education", ylab = "age")
+```
+
+
+### b. Pearson Correlation
+
+```{r pearson corr age-edu, echo=FALSE}
+
+cor(healthy$eduyears, healthy$age, method = c ("pearson"))
+
+library("ggpubr")
+ggscatter(healthy, x = "eduyears", y = "age", 
+          add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "pearson",
+          xlab = "years of official education", ylab = "age")
+```
